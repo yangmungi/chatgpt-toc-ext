@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h3>Set OpenAI API Key</h3>
+    <input type="password" id="apiKey" placeholder="sk-..." />
+
+    <label for="model">OpenAI Model:</label>
+    <input type="text" id="model" placeholder="gpt-3.5-turbo" />
+    <button id="validate">Check Model</button>
+    <span id="validation-result" style="margin-left: 10px;"></span>
+
+    <button id="save">Save</button>
+
+    <script>
+      const modelInput = document.getElementById('model');
+      const saveBtn = document.getElementById('save');
+
+      // Load stored value or use default
+      chrome.storage.sync.get({ model: 'gpt-3.5-turbo' }, (data) => {
+        modelInput.value = data.model;
+      });
+
+      const validateBtn = document.getElementById('validate');
+      const validationResult = document.getElementById('validation-result');
+      const apiKeyInput = document.getElementById('apiKey');
+
+      validateBtn.onclick = async () => {
+        const model = modelInput.value.trim();
+        let { openai_api_key } = await chrome.storage.local.get(['openai_api_key']);
+        if (!openai_api_key) {
+          openai_api_key = apiKeyInput.value;
+        }
+
+        if (!openai_api_key) {
+          validationResult.textContent = '⚠️ No API key found';
+          return;
+        }
+
+        try {
+          const res = await fetch('https://api.openai.com/v1/models', {
+            headers: {
+              'Authorization': `Bearer ${openai_api_key}`
+            }
+          });
+          const data = await res.json();
+          const models = data.data.map(m => m.id);
+          if (models.includes(model)) {
+            validationResult.textContent = '✅ Model is available';
+          } else {
+            validationResult.textContent = '❌ Model not available to this key';
+          }
+        } catch (e) {
+          validationResult.textContent = '❌ Error checking model';
+          console.log(e);
+        }
+      };
+
+      document.getElementById('save').onclick = () => {
+        const key = apiKeyInput.value;
+        chrome.storage.local.set({ openai_api_key: key }, () => {
+        });
+        chrome.storage.sync.set({ model: modelInput.value }, () => {
+        });
+      };
+    </script>
+  </body>
+</html>
+

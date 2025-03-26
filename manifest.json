@@ -1,0 +1,17 @@
+{
+  "name": "ChatGPT Message Summarizer",
+  "version": "1.0",
+  "manifest_version": 3,
+  "permissions": ["scripting", "storage", "activeTab"],
+  "host_permissions": ["https://chat.openai.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://chat.openai.com/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "options_page": "options.html"
+}
